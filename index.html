@@ -117,11 +117,13 @@ import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, i
 import { getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, query, orderBy, onSnapshot, getDocs, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"YOUR_API_KEY",
-  authDomain:"YOUR_AUTH_DOMAIN",
-  projectId:"YOUR_PROJECT_ID",
-  messagingSenderId:"YOUR_SENDER_ID",
-  appId:"YOUR_APP_ID"
+  apiKey: "AIzaSyCJeZ2RyApZueVvqYzdctLRTuo9kIfySzE",
+  authDomain: "umi-chat-500c6.firebaseapp.com",
+  projectId: "umi-chat-500c6",
+  storageBucket: "umi-chat-500c6.appspot.com", // важно .appspot.com
+  messagingSenderId: "340727638941",
+  appId: "1:340727638941:web:581218a8ff4fa098a85d74",
+  measurementId: "G-DPPKQEF6BE"
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -402,3 +404,4 @@ async function loadPosts(){
 </script>
 </body>
 </html>
+
