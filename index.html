@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UniChat — Мессенджер</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html,body { height:100%; }
+    video { max-height:280px; }
+    .msg { word-break:break-word; }
+    .dark body { background:#0f172a; color:#f1f5f9; }
+    .dark .bg-white { background:#1e293b !important; color:#f8fafc; }
+    .dark input,.dark textarea { background:#334155 !important; color:#f8fafc; }
+  </style>
+</head>
+<body class="bg-sky-50 text-slate-900 min-h-full transition-colors">
+  <div class="max-w-5xl mx-auto p-4 grid gap-4">
+    <header class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">UniChat <span class="text-sky-600">demo</span></h1>
+      <div class="flex items-center gap-3">
+        <button id="btnTheme" class="px-3 py-1 rounded-xl bg-slate-200 hover:bg-slate-300">🌙</button>
+        <span id="userEmail" class="text-sm text-slate-600"></span>
+        <label class="cursor-pointer">
+          <input id="avatarUpload" type="file" accept="image/*" class="hidden"/>
+          <img id="avatarImg" src="" alt="avatar" class="w-8 h-8 rounded-full border border-slate-300 object-cover"/>
+        </label>
+        <button id="btnSignOut" class="hidden px-3 py-1 rounded-xl bg-slate-200 hover:bg-slate-300">Выйти</button>
+      </div>
+    </header>
+
+    <!-- Auth -->
+    <section id="auth" class="grid gap-3 bg-white rounded-2xl p-4 shadow">
+      <h2 class="font-semibold">Вход или регистрация</h2>
+      <div class="grid md:grid-cols-2 gap-3">
+        <input id="email" type="email" placeholder="email" class="px-3 py-2 rounded-xl bg-slate-100"/>
+        <input id="password" type="password" placeholder="пароль (мин. 6)" class="px-3 py-2 rounded-xl bg-slate-100"/>
+      </div>
+      <div class="flex gap-2">
+        <button id="btnRegister" class="px-4 py-2 rounded-xl bg-sky-600 text-white">Зарегистрироваться</button>
+        <button id="btnLogin" class="px-4 py-2 rounded-xl bg-sky-600/70 text-white">Войти</button>
+        <label class="flex items-center gap-2 text-sm ml-2">
+          <input id="remember" type="checkbox" checked/> запомнить меня
+        </label>
+      </div>
+    </section>
+
+    <!-- App -->
+    <section id="app" class="hidden grid md:grid-cols-[240px_1fr] gap-4">
+      <!-- Sidebar -->
+      <aside class="bg-white rounded-2xl p-4 shadow grid gap-4 h-fit md:sticky top-4">
+        <div class="grid gap-2">
+          <h3 class="font-semibold">Комнаты</h3>
+          <input id="roomId" placeholder="id комнаты" class="px-3 py-2 rounded-xl bg-slate-100"/>
+          <div class="flex gap-2 mt-2">
+            <button id="btnCreateRoom" class="px-3 py-2 rounded-xl bg-emerald-600 text-white">Создать</button>
+            <button id="btnJoinRoom" class="px-3 py-2 rounded-xl bg-slate-200">Открыть</button>
+          </div>
+        </div>
+        <div class="grid gap-2">
+          <h3 class="font-semibold">Поиск</h3>
+          <input id="searchInput" placeholder="найти сообщение" class="px-3 py-2 rounded-xl bg-slate-100"/>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="grid gap-4">
+        <div class="bg-white rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-2">Чат</h3>
+          <div id="messages" class="h-[420px] overflow-y-auto grid gap-2 pr-2"></div>
+          <div class="mt-3 flex gap-2">
+            <input id="msgInput" placeholder="сообщение" class="px-3 py-2 rounded-xl bg-slate-100 flex-1"/>
+            <button id="btnSend" class="px-4 py-2 rounded-xl bg-sky-600 text-white">Отправить</button>
+          </div>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <!-- Firebase + App -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, inMemoryPersistence, 
+      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, query, orderBy, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Твой конфиг
+    const firebaseConfig = {
+      apiKey: "AIzaSyCJeZ2RyApZueVvqYzdctLRTuo9kIfySzE",
+      authDomain: "umi-chat-500c6.firebaseapp.com",
+      projectId: "umi-chat-500c6",
+      messagingSenderId: "340727638941",
+      appId: "1:340727638941:web:581218a8ff4fa098a85d74"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // элементы
+    const authBox = document.getElementById("auth");
+    const appBox = document.getElementById("app");
+    const btnTheme = document.getElementById("btnTheme");
+    const userEmail = document.getElementById("userEmail");
+    const avatarUpload = document.getElementById("avatarUpload");
+    const avatarImg = document.getElementById("avatarImg");
+    const btnSignOut = document.getElementById("btnSignOut");
+    const messagesEl = document.getElementById("messages");
+    const msgInput = document.getElementById("msgInput");
+    const searchInput = document.getElementById("searchInput");
+
+    let currentRoomId = null;
+
+    // тема
+    btnTheme.onclick = () => document.documentElement.classList.toggle("dark");
+
+    // аватар (base64, без Storage)
+    avatarUpload.onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        await updateProfile(auth.currentUser, { photoURL: reader.result });
+        avatarImg.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // логин/регистрация
+    document.getElementById("btnRegister").onclick = () => {
+      createUserWithEmailAndPassword(auth, email.value, password.value).catch(alert);
+    };
+    document.getElementById("btnLogin").onclick = () => {
+      const persistence = remember.checked ? browserLocalPersistence : inMemoryPersistence;
+      setPersistence(auth, persistence).then(() => {
+        return signInWithEmailAndPassword(auth, email.value, password.value);
+      }).catch(alert);
+    };
+    btnSignOut.onclick = () => signOut(auth);
+
+    // переключение интерфейса
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        authBox.classList.add("hidden");
+        appBox.classList.remove("hidden");
+        userEmail.textContent = user.email;
+        avatarImg.src = user.photoURL || "";
+      } else {
+        authBox.classList.remove("hidden");
+        appBox.classList.add("hidden");
+      }
+    });
+
+    // комнаты
+    document.getElementById("btnCreateRoom").onclick = async () => {
+      const ref = await addDoc(collection(db,"rooms"),{ created:Date.now() });
+      roomId.value = ref.id;
+      joinRoom(ref.id);
+    };
+    document.getElementById("btnJoinRoom").onclick = () => joinRoom(roomId.value);
+
+    function joinRoom(id){
+      currentRoomId = id;
+      messagesEl.innerHTML = "";
+      const q = query(collection(db,"rooms",id,"messages"), orderBy("time"));
+      onSnapshot(q, snap=>{
+        messagesEl.innerHTML="";
+        snap.forEach(doc=>{
+          renderMessage(doc.id, doc.data());
+        });
+      });
+    }
+
+    // отправка сообщений
+    document.getElementById("btnSend").onclick = async () => {
+      if(!currentRoomId) return alert("Открой комнату!");
+      if(!msgInput.value.trim()) return;
+      await addDoc(collection(db,"rooms",currentRoomId,"messages"),{
+        user: auth.currentUser.email,
+        text: msgInput.value,
+        time: Date.now()
+      });
+      msgInput.value="";
+    };
+
+    // рендер сообщений
+    function renderMessage(id,m){
+      const wrap=document.createElement("div");
+      wrap.className="msg p-2 rounded-xl bg-slate-50 border";
+      let html=`<div class='text-xs text-slate-500'>${m.user}</div>`;
+      if(m.text) html+=`<div class='mt-1'>${m.text}</div>`;
+      html+=`<div class='mt-1 flex gap-2 text-xs'>
+        <button onclick="editMsg('${id}','${m.text||''}')">✏️</button>
+        <button onclick="reactMsg('${id}','👍')">👍</button>
+        <button onclick="reactMsg('${id}','😂')">😂</button>
+      </div>`;
+      if(m.reactions){
+        html+=`<div class='mt-1 text-sm'>${Object.entries(m.reactions).map(([k,v])=>k+" "+v).join(" ")}</div>`;
+      }
+      wrap.innerHTML=html;
+      messagesEl.appendChild(wrap);
+    }
+
+    window.editMsg = async (id,oldText)=>{
+      const newText=prompt("Новое сообщение",oldText);
+      if(!newText) return;
+      await updateDoc(doc(db,"rooms",currentRoomId,"messages",id),{ text:newText });
+    };
+
+    window.reactMsg = async (id,emoji)=>{
+      const ref=doc(db,"rooms",currentRoomId,"messages",id);
+      const snap=await getDoc(ref);
+      let data=snap.data();
+      let reactions=data.reactions||{};
+      reactions[emoji]=(reactions[emoji]||0)+1;
+      await updateDoc(ref,{ reactions });
+    };
+
+    // поиск
+    searchInput.oninput=()=>{
+      const q=searchInput.value.toLowerCase();
+      [...messagesEl.children].forEach(m=>{
+        m.style.display=m.textContent.toLowerCase().includes(q)?'':'none';
+      });
+    };
+  </script>
+</body>
+</html>
