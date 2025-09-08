@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>UniChat — Friends Chat</title>
+<title>UniChat — Friends & Posts</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 html,body{height:100%}
 body{transition:background 0.3s,color 0.3s}
-.msg{word-break:break-word}
 .dark body{background:#0f172a;color:#f1f5f9}
 .dark .bg-white{background:#1e293b !important;color:#f8fafc}
 .dark input,.dark textarea{background:#334155 !important;color:#f8fafc}
 .flex-center{display:flex;align-items:center;gap:0.5rem}
 audio{max-width:200px}
 img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
+.post-img{max-width:100%;border-radius:0.5rem}
 </style>
 </head>
 <body class="bg-sky-50 text-slate-900 min-h-full">
 
-<div class="max-w-5xl mx-auto p-4 grid gap-4">
+<div class="max-w-6xl mx-auto p-4 grid gap-4">
 
 <header class="flex items-center justify-between">
   <h1 class="text-2xl font-bold">UniChat <span class="text-sky-600">demo</span></h1>
@@ -28,7 +28,7 @@ img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
     <span id="userEmail" class="text-sm text-slate-600"></span>
     <label class="cursor-pointer">
       <input id="avatarUpload" type="file" accept="image/*" class="hidden"/>
-      <img id="avatarImg" src="" alt="avatar" class="w-8 h-8 rounded-full border border-slate-300 object-cover"/>
+      <img id="avatarImg" src="" alt="avatar" class="w-10 h-10 rounded-full border border-slate-300 object-cover"/>
     </label>
     <button id="btnSignOut" class="hidden px-3 py-1 rounded-xl bg-slate-200 hover:bg-slate-300">Выйти</button>
   </div>
@@ -49,29 +49,43 @@ img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
 </section>
 
 <!-- App -->
-<section id="app" class="hidden grid md:grid-cols-[200px_1fr] gap-4">
+<section id="app" class="hidden grid md:grid-cols-[250px_1fr] gap-4">
 
-<!-- Sidebar: друзья -->
+<!-- Sidebar: профиль и друзья -->
 <aside class="bg-white rounded-2xl p-4 shadow grid gap-4 h-fit md:sticky top-4">
+
+  <!-- Профиль -->
   <div class="grid gap-2">
     <h3 class="font-semibold">Профиль</h3>
     <input id="nickInput" placeholder="ник" class="px-3 py-2 rounded-xl bg-slate-100"/>
+    <textarea id="descInput" placeholder="Описание профиля" class="px-3 py-2 rounded-xl bg-slate-100"></textarea>
     <button id="btnUpdateProfile" class="px-3 py-2 rounded-xl bg-sky-600 text-white">Сохранить профиль</button>
   </div>
+
+  <!-- Друзья -->
   <div class="grid gap-2">
     <h3 class="font-semibold">Добавить друга</h3>
     <input id="friendSearch" placeholder="по нику" class="px-3 py-2 rounded-xl bg-slate-100"/>
     <div id="friendResults" class="max-h-48 overflow-y-auto grid gap-1"></div>
   </div>
+
   <div class="grid gap-2">
     <h3 class="font-semibold">Мои друзья</h3>
     <div id="friendList" class="max-h-[300px] overflow-y-auto grid gap-1"></div>
   </div>
+
+  <div class="grid gap-2">
+    <h3 class="font-semibold">Заявки в друзья</h3>
+    <div id="friendRequests" class="max-h-[200px] overflow-y-auto grid gap-1"></div>
+  </div>
+
 </aside>
 
-<!-- Main Chat -->
+<!-- Main: чат и посты -->
 <main class="grid gap-4">
-  <div class="bg-white rounded-2xl p-4 shadow flex flex-col h-[600px]">
+
+  <!-- Чат -->
+  <div class="bg-white rounded-2xl p-4 shadow flex flex-col h-[400px]">
     <h3 id="chatTitle" class="font-semibold mb-2">Выберите друга</h3>
     <div id="messages" class="flex-1 overflow-y-auto grid gap-2 pr-2"></div>
     <div class="mt-3 flex gap-2">
@@ -81,6 +95,17 @@ img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
       <button id="btnSend" class="px-4 py-2 rounded-xl bg-sky-600 text-white">Отправить</button>
     </div>
   </div>
+
+  <!-- Посты -->
+  <div class="bg-white rounded-2xl p-4 shadow">
+    <h3 class="font-semibold mb-2">Посты</h3>
+    <textarea id="postInput" placeholder="Ваш пост..." class="w-full px-3 py-2 rounded-xl bg-slate-100"></textarea>
+    <input id="postFile" type="file" accept="image/*" class="hidden"/>
+    <button id="btnPostFile" class="px-3 py-2 rounded-xl bg-slate-200 mt-2">📎</button>
+    <button id="btnPost" class="px-4 py-2 rounded-xl bg-sky-600 text-white mt-2">Опубликовать</button>
+    <div id="postList" class="mt-4 grid gap-2"></div>
+  </div>
+
 </main>
 
 </section>
@@ -89,14 +114,14 @@ img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, inMemoryPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, query, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, query, orderBy, onSnapshot, getDocs, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyCJeZ2RyApZueVvqYzdctLRTuo9kIfySzE",
-  authDomain:"umi-chat-500c6.firebaseapp.com",
-  projectId:"umi-chat-500c6",
-  messagingSenderId:"340727638941",
-  appId:"1:340727638941:web:581218a8ff4fa098a85d74"
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_AUTH_DOMAIN",
+  projectId:"YOUR_PROJECT_ID",
+  messagingSenderId:"YOUR_SENDER_ID",
+  appId:"YOUR_APP_ID"
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -115,11 +140,18 @@ const msgInput=document.getElementById("msgInput");
 const fileInput=document.getElementById("fileInput");
 const btnFile=document.getElementById("btnFile");
 const nickInput=document.getElementById("nickInput");
+const descInput=document.getElementById("descInput");
 const btnUpdateProfile=document.getElementById("btnUpdateProfile");
 const friendSearch=document.getElementById("friendSearch");
 const friendResults=document.getElementById("friendResults");
 const friendList=document.getElementById("friendList");
+const friendRequests=document.getElementById("friendRequests");
 const chatTitle=document.getElementById("chatTitle");
+const postInput=document.getElementById("postInput");
+const btnPost=document.getElementById("btnPost");
+const btnPostFile=document.getElementById("btnPostFile");
+const postFile=document.getElementById("postFile");
+const postList=document.getElementById("postList");
 
 let currentUser=null;
 let currentChatId=null;
@@ -136,7 +168,14 @@ avatarUpload.onchange=async e=>{
   reader.onload=async ()=>{
     await updateProfile(auth.currentUser,{photoURL:reader.result});
     avatarImg.src=reader.result;
-    await setDoc(doc(db,"users",auth.currentUser.uid),{displayName:nickInput.value||auth.currentUser.displayName,email:auth.currentUser.email,photoURL:reader.result,friends:[]},{merge:true});
+    await setDoc(doc(db,"users",auth.currentUser.uid),{
+      displayName:nickInput.value||auth.currentUser.displayName,
+      email:auth.currentUser.email,
+      photoURL:reader.result,
+      description:descInput.value||"",
+      friends:[],
+      requests:[]
+    },{merge:true});
   };
   reader.readAsDataURL(file);
 };
@@ -157,7 +196,10 @@ onAuthStateChanged(auth,user=>{
     userEmail.textContent=user.email;
     avatarImg.src=user.photoURL||"";
     nickInput.value=user.displayName||"";
+    descInput.value=user.description||"";
     loadFriends();
+    loadRequests();
+    loadPosts();
   }else{
     authBox.classList.remove("hidden");
     appBox.classList.add("hidden");
@@ -167,10 +209,17 @@ onAuthStateChanged(auth,user=>{
 // Профиль
 btnUpdateProfile.onclick=async()=>{
   await updateProfile(currentUser,{displayName:nickInput.value});
-  await setDoc(doc(db,"users",currentUser.uid),{displayName:nickInput.value,email:currentUser.email,photoURL:currentUser.photoURL,friends:[]},{merge:true});
+  await setDoc(doc(db,"users",currentUser.uid),{
+    displayName:nickInput.value,
+    email:currentUser.email,
+    photoURL:currentUser.photoURL,
+    description:descInput.value||"",
+    friends:[],
+    requests:[]
+  },{merge:true});
 };
 
-// Друзья
+// Друзья: поиск
 async function searchFriends(){
   friendResults.innerHTML="";
   const q=friendSearch.value.trim().toLowerCase();
@@ -181,23 +230,53 @@ async function searchFriends(){
     if(d.displayName.toLowerCase().includes(q) && u.id!==currentUser.uid){
       const div=document.createElement("div");
       div.className="flex justify-between items-center";
-      div.innerHTML=`<span>${d.displayName}</span><button class="px-2 py-1 bg-sky-600 text-white rounded" onclick="addFriend('${u.id}')">Добавить</button>`;
+      div.innerHTML=`<span>${d.displayName}</span>
+      <button class="px-2 py-1 bg-sky-600 text-white rounded" onclick="sendRequest('${u.id}')">Добавить</button>`;
       friendResults.appendChild(div);
     }
   });
 }
 friendSearch.oninput=searchFriends;
 
-window.addFriend=async(uid)=>{
-  const userRef=doc(db,"users",currentUser.uid);
-  const userSnap=await getDoc(userRef);
-  let data=userSnap.data();
-  data.friends=data.friends||[];
-  if(!data.friends.includes(uid)) data.friends.push(uid);
-  await updateDoc(userRef,{friends:data.friends});
-  loadFriends();
+// Отправка заявки
+window.sendRequest=async(uid)=>{
+  const userRef=doc(db,"users",uid);
+  await updateDoc(userRef,{requests:arrayUnion(currentUser.uid)});
+  alert("Заявка отправлена");
 };
 
+// Заявки
+async function loadRequests(){
+  friendRequests.innerHTML="";
+  const docSnap=await getDoc(doc(db,"users",currentUser.uid));
+  const data=docSnap.data();
+  (data.requests||[]).forEach(async reqUid=>{
+    const reqSnap=await getDoc(doc(db,"users",reqUid));
+    const reqData=reqSnap.data();
+    const div=document.createElement("div");
+    div.className="flex justify-between items-center";
+    div.innerHTML=`<span>${reqData.displayName}</span>
+    <div class="flex gap-1">
+      <button class="px-2 py-1 bg-green-600 text-white rounded" onclick="acceptRequest('${reqUid}')">Принять</button>
+      <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="declineRequest('${reqUid}')">Отклонить</button>
+    </div>`;
+    friendRequests.appendChild(div);
+  });
+}
+window.acceptRequest=async(uid)=>{
+  await updateDoc(doc(db,"users",currentUser.uid),{
+    friends:arrayUnion(uid),
+    requests:arrayRemove(uid)
+  });
+  await updateDoc(doc(db,"users",uid),{friends:arrayUnion(currentUser.uid)});
+  loadFriends(); loadRequests();
+};
+window.declineRequest=async(uid)=>{
+  await updateDoc(doc(db,"users",currentUser.uid),{requests:arrayRemove(uid)});
+  loadRequests();
+};
+
+// Друзья: список
 async function loadFriends(){
   friendList.innerHTML="";
   const userSnap=await getDoc(doc(db,"users",currentUser.uid));
@@ -207,14 +286,23 @@ async function loadFriends(){
     const fdata=fSnap.data();
     if(!fdata) return;
     const div=document.createElement("div");
-    div.className="flex items-center gap-2 cursor-pointer";
-    div.innerHTML=`<img src="${fdata.photoURL||''}" class="w-6 h-6 rounded-full"/><span>${fdata.displayName}</span>`;
+    div.className="flex items-center gap-2 cursor-pointer justify-between";
+    div.innerHTML=`<div class="flex items-center gap-2">
+      <img src="${fdata.photoURL||''}" class="w-6 h-6 rounded-full"/>
+      <span>${fdata.displayName}</span>
+    </div>
+    <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="removeFriend('${fuid}')">Удалить</button>`;
     div.onclick=()=>openChat(fuid,fdata.displayName);
     friendList.appendChild(div);
   });
 }
+window.removeFriend=async(uid)=>{
+  await updateDoc(doc(db,"users",currentUser.uid),{friends:arrayRemove(uid)});
+  await updateDoc(doc(db,"users",uid),{friends:arrayRemove(currentUser.uid)});
+  loadFriends();
+};
 
-// Открытие чата
+// Чат
 async function openChat(friendUid,friendName){
   currentFriend=friendUid;
   chatTitle.textContent="Чат с "+friendName;
@@ -227,8 +315,6 @@ async function openChat(friendUid,friendName){
     messagesEl.scrollTop=messagesEl.scrollHeight;
   });
 }
-
-// Отправка сообщений
 document.getElementById("btnSend").onclick=async()=>{
   if(!currentChatId) return alert("Выберите друга!");
   let content=msgInput.value.trim();
@@ -243,8 +329,6 @@ document.getElementById("btnSend").onclick=async()=>{
   });
   msgInput.value="";
 };
-
-// Прикрепить файл
 btnFile.onclick=()=>fileInput.click();
 fileInput.onchange=async e=>{
   if(!currentChatId) return alert("Выберите друга!");
@@ -264,8 +348,6 @@ fileInput.onchange=async e=>{
   };
   reader.readAsDataURL(file);
 };
-
-// Рендер сообщений
 function renderMessage(id,m){
   const wrap=document.createElement("div");
   wrap.className="flex gap-2 items-start msg p-2 rounded-xl bg-slate-50 border dark:bg-slate-800 dark:text-slate-100";
@@ -276,6 +358,47 @@ function renderMessage(id,m){
   wrap.innerHTML=`<img src="${m.avatar||''}" class="w-8 h-8 rounded-full"/><div class="flex flex-col"><div class="text-xs text-slate-500 dark:text-slate-400">${m.uid===currentUser.uid?"Вы":""}</div>${inner}</div>`;
   messagesEl.appendChild(wrap);
 }
+
+// Посты
+btnPost.onclick=async()=>{
+  let content=postInput.value.trim();
+  if(!content && !postFile.files[0]) return;
+  let fileData="";
+  if(postFile.files[0]){
+    const reader=new FileReader();
+    reader.onload=async ()=>{
+      fileData=reader.result;
+      await addPost(content,fileData);
+    };
+    reader.readAsDataURL(postFile.files[0]);
+  }else{
+    await addPost(content,"");
+  }
+  postInput.value=""; postFile.value="";
+};
+btnPostFile.onclick=()=>postFile.click();
+async function addPost(content,file){
+  await addDoc(collection(db,"posts"),{
+    uid:currentUser.uid,
+    avatar:currentUser.photoURL,
+    content,
+    file,
+    time:Date.now()
+  });
+}
+async function loadPosts(){
+  postList.innerHTML="";
+  const postsSnap=await getDocs(collection(db,"posts"));
+  postsSnap.forEach(async docSnap=>{
+    const data=docSnap.data();
+    const div=document.createElement("div");
+    div.className="border p-2 rounded-xl";
+    if(data.file) div.innerHTML=`<div>${data.content}</div><img src="${data.file}" class="post-img"/>`;
+    else div.innerHTML=`<div>${data.content}</div>`;
+    postList.appendChild(div);
+  });
+}
+
 </script>
 </body>
 </html>
