@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>UniChat — Friends & Posts</title>
+<title>UniChat — Demo</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 html,body{height:100%}
@@ -15,26 +15,25 @@ body{transition:background 0.3s,color 0.3s}
 audio{max-width:200px}
 img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
 .post-img{max-width:100%;border-radius:0.5rem}
-.menu-item{cursor:pointer; padding:0.5rem 1rem; border-radius:0.5rem;}
-.menu-item:hover{background-color:rgba(14,165,233,0.2);}
-.active-menu{background-color:rgba(14,165,233,0.3);}
 </style>
 </head>
 <body class="bg-sky-50 text-slate-900 min-h-full">
 
 <div class="max-w-6xl mx-auto p-4 grid gap-4">
 
-<header class="flex items-center justify-between">
+<!-- Header -->
+<header class="flex items-center justify-between mb-4">
   <h1 class="text-2xl font-bold">UniChat <span class="text-sky-600">demo</span></h1>
-  <div class="flex items-center gap-3">
-    <button id="btnTheme" class="px-3 py-1 rounded-xl bg-slate-200 hover:bg-slate-300">🌙</button>
-    <span id="userEmail" class="text-sm text-slate-600"></span>
-    <label class="cursor-pointer">
-      <input id="avatarUpload" type="file" accept="image/*" class="hidden"/>
+  <nav class="flex items-center gap-4">
+    <button id="tabFriends" class="px-3 py-1 rounded-xl bg-sky-600 text-white">Друзья</button>
+    <button id="tabFeed" class="px-3 py-1 rounded-xl bg-sky-600 text-white">Лента</button>
+    <button id="tabSettings" class="px-3 py-1 rounded-xl bg-sky-600 text-white">Настройки</button>
+    <span id="userInfo" class="flex items-center gap-2 cursor-pointer">
       <img id="avatarImg" src="" alt="avatar" class="w-10 h-10 rounded-full border border-slate-300 object-cover"/>
-    </label>
+      <span id="userEmail" class="text-sm"></span>
+    </span>
     <button id="btnSignOut" class="hidden px-3 py-1 rounded-xl bg-slate-200 hover:bg-slate-300">Выйти</button>
-  </div>
+  </nav>
 </header>
 
 <!-- Auth -->
@@ -52,82 +51,84 @@ img.video-preview{max-width:200px;max-height:200px;border-radius:0.5rem}
 </section>
 
 <!-- App -->
-<section id="app" class="hidden grid md:grid-cols-[200px_1fr] gap-4">
+<section id="app" class="hidden">
 
-<!-- Sidebar: меню и друзья -->
-<aside class="bg-white rounded-2xl p-4 shadow grid gap-4 h-fit md:sticky top-4">
+  <!-- Tabs content -->
+  <div id="tabContent" class="grid gap-4">
 
-  <div class="grid gap-2">
-    <h3 class="font-semibold">Меню</h3>
-    <div id="menu">
-      <div id="menuFriends" class="menu-item active-menu">Друзья</div>
-      <div id="menuFeed" class="menu-item">Лента</div>
-      <div id="menuSettings" class="menu-item">Настройки</div>
+    <!-- Друзья -->
+    <div id="friendsTab" class="hidden grid md:grid-cols-[250px_1fr] gap-4">
+
+      <!-- Sidebar: друзья и заявки -->
+      <aside class="bg-white rounded-2xl p-4 shadow grid gap-4 h-fit md:sticky top-4">
+        <div class="grid gap-2">
+          <input id="friendSearch" placeholder="Поиск по нику" class="px-3 py-2 rounded-xl bg-slate-100"/>
+          <div id="friendResults" class="max-h-48 overflow-y-auto grid gap-1"></div>
+        </div>
+
+        <div class="grid gap-2">
+          <h3 class="font-semibold">Мои друзья</h3>
+          <div id="friendList" class="max-h-[300px] overflow-y-auto grid gap-1"></div>
+        </div>
+
+        <div class="grid gap-2">
+          <h3 class="font-semibold">Заявки в друзья</h3>
+          <div id="friendRequests" class="max-h-[200px] overflow-y-auto grid gap-1"></div>
+        </div>
+      </aside>
+
+      <!-- Main: профиль друга или чат -->
+      <main class="grid gap-4">
+
+        <!-- Профиль друга -->
+        <div id="friendProfile" class="bg-white rounded-2xl p-4 shadow hidden">
+          <h3 class="font-semibold mb-2" id="friendProfileName"></h3>
+          <img id="friendProfileAvatar" src="" class="w-24 h-24 rounded-full mb-2"/>
+          <p id="friendProfileDesc"></p>
+          <button id="btnSendFriendRequest" class="px-3 py-2 rounded-xl bg-sky-600 text-white mt-2">Добавить в друзья</button>
+          <button id="btnOpenChat" class="px-3 py-2 rounded-xl bg-slate-200 text-black mt-2">Открыть чат</button>
+        </div>
+
+        <!-- Чат -->
+        <div id="chat" class="bg-white rounded-2xl p-4 shadow flex flex-col h-[400px] hidden">
+          <h3 id="chatTitle" class="font-semibold mb-2"></h3>
+          <div id="messages" class="flex-1 overflow-y-auto grid gap-2 pr-2"></div>
+          <div class="mt-3 flex gap-2">
+            <input id="msgInput" placeholder="Сообщение" class="px-3 py-2 rounded-xl bg-slate-100 flex-1"/>
+            <input id="fileInput" type="file" accept="image/*,audio/*" class="hidden"/>
+            <button id="btnFile" class="px-3 py-2 rounded-xl bg-slate-200">📎</button>
+            <button id="btnSend" class="px-4 py-2 rounded-xl bg-sky-600 text-white">Отправить</button>
+          </div>
+        </div>
+
+      </main>
     </div>
-  </div>
 
-  <div class="grid gap-2" id="friendsSidebar">
-    <h3 class="font-semibold">Мои друзья</h3>
-    <div id="friendList" class="max-h-[400px] overflow-y-auto grid gap-1"></div>
-  </div>
-
-</aside>
-
-<!-- Main: страницы -->
-<main class="grid gap-4">
-
-  <!-- Друзья / поиск / профиль -->
-  <div id="pageFriends">
-    <div class="grid gap-2 bg-white rounded-2xl p-4 shadow">
-      <h3 class="font-semibold">Поиск друзей</h3>
-      <input id="friendSearch" placeholder="по нику" class="px-3 py-2 rounded-xl bg-slate-100"/>
-      <div id="friendResults" class="max-h-48 overflow-y-auto grid gap-1"></div>
-    </div>
-
-    <div class="grid gap-2 bg-white rounded-2xl p-4 shadow mt-4" id="friendProfileBox" style="display:none">
-      <h3 class="font-semibold" id="friendProfileName"></h3>
-      <img id="friendProfileAvatar" class="w-16 h-16 rounded-full"/>
-      <p id="friendProfileDesc"></p>
-      <div class="flex gap-2">
-        <button id="btnAddFriend" class="px-3 py-2 rounded-xl bg-sky-600 text-white">Добавить в друзья</button>
-        <button id="btnOpenChat" class="px-3 py-2 rounded-xl bg-green-600 text-white">Открыть чат</button>
+    <!-- Лента -->
+    <div id="feedTab" class="hidden">
+      <div class="bg-white rounded-2xl p-4 shadow mb-4">
+        <textarea id="postInput" placeholder="Ваш пост..." class="w-full px-3 py-2 rounded-xl bg-slate-100"></textarea>
+        <input id="postFile" type="file" accept="image/*" class="hidden"/>
+        <button id="btnPostFile" class="px-3 py-2 rounded-xl bg-slate-200 mt-2">📎</button>
+        <button id="btnPost" class="px-4 py-2 rounded-xl bg-sky-600 text-white mt-2">Опубликовать</button>
       </div>
+      <div id="postList" class="grid gap-2"></div>
     </div>
-  </div>
 
-  <!-- Лента -->
-  <div id="pageFeed" style="display:none" class="grid gap-2">
-    <div class="bg-white rounded-2xl p-4 shadow">
-      <h3 class="font-semibold mb-2">Новая публикация</h3>
-      <textarea id="postInput" placeholder="Ваш пост..." class="w-full px-3 py-2 rounded-xl bg-slate-100"></textarea>
-      <input id="postFile" type="file" accept="image/*" class="hidden"/>
-      <button id="btnPostFile" class="px-3 py-2 rounded-xl bg-slate-200 mt-2">📎</button>
-      <button id="btnPost" class="px-4 py-2 rounded-xl bg-sky-600 text-white mt-2">Опубликовать</button>
+    <!-- Настройки/Профиль -->
+    <div id="settingsTab" class="hidden bg-white rounded-2xl p-4 shadow grid gap-3">
+      <h3 class="font-semibold">Профиль</h3>
+      <label class="cursor-pointer">
+        <input id="avatarUpload" type="file" accept="image/*" class="hidden"/>
+        <img id="settingsAvatar" src="" alt="avatar" class="w-24 h-24 rounded-full border border-slate-300 object-cover mb-2"/>
+      </label>
+      <input id="nickInput" placeholder="Ник" class="px-3 py-2 rounded-xl bg-slate-100"/>
+      <textarea id="descInput" placeholder="Описание профиля" class="px-3 py-2 rounded-xl bg-slate-100"></textarea>
+      <button id="btnUpdateProfile" class="px-3 py-2 rounded-xl bg-sky-600 text-white">Сохранить профиль</button>
+      <button id="btnTheme" class="px-3 py-2 rounded-xl bg-slate-200 mt-2">🌙 Сменить тему</button>
     </div>
-    <div id="postList" class="mt-4 grid gap-2"></div>
-  </div>
 
-  <!-- Настройки -->
-  <div id="pageSettings" style="display:none" class="grid gap-2 bg-white rounded-2xl p-4 shadow">
-    <h3 class="font-semibold">Настройки профиля</h3>
-    <input id="nickInput" placeholder="ник" class="px-3 py-2 rounded-xl bg-slate-100"/>
-    <textarea id="descInput" placeholder="Описание профиля" class="px-3 py-2 rounded-xl bg-slate-100"></textarea>
-    <button id="btnUpdateProfile" class="px-3 py-2 rounded-xl bg-sky-600 text-white">Сохранить профиль</button>
   </div>
-
-  <!-- Чат -->
-  <div id="pageChat" style="display:none" class="bg-white rounded-2xl p-4 shadow flex flex-col h-[400px]">
-    <h3 id="chatTitle" class="font-semibold mb-2">Выберите друга</h3>
-    <div id="messages" class="flex-1 overflow-y-auto grid gap-2 pr-2"></div>
-    <div class="mt-3 flex gap-2">
-      <input id="msgInput" placeholder="сообщение" class="px-3 py-2 rounded-xl bg-slate-100 flex-1"/>
-      <input id="fileInput" type="file" accept="image/*,audio/*" class="hidden"/>
-      <button id="btnFile" class="px-3 py-2 rounded-xl bg-slate-200">📎</button>
-      <button id="btnSend" class="px-4 py-2 rounded-xl bg-sky-600 text-white">Отправить</button>
-    </div>
-  </div>
-
-</main>
 
 </section>
 
@@ -143,8 +144,7 @@ const firebaseConfig = {
   projectId: "umi-chat-500c6",
   storageBucket: "umi-chat-500c6.appspot.com",
   messagingSenderId: "340727638941",
-  appId: "1:340727638941:web:581218a8ff4fa098a85d74",
-  measurementId: "G-DPPKQEF6BE"
+  appId: "1:340727638941:web:581218a8ff4fa098a85d74"
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -153,94 +153,89 @@ const db = getFirestore(app);
 // Элементы
 const authBox=document.getElementById("auth");
 const appBox=document.getElementById("app");
-const btnTheme=document.getElementById("btnTheme");
-const userEmail=document.getElementById("userEmail");
-const avatarUpload=document.getElementById("avatarUpload");
+
+const tabs = {
+  friends: document.getElementById("friendsTab"),
+  feed: document.getElementById("feedTab"),
+  settings: document.getElementById("settingsTab")
+};
+document.getElementById("tabFriends").onclick=()=>showTab("friends");
+document.getElementById("tabFeed").onclick=()=>showTab("feed");
+document.getElementById("tabSettings").onclick=()=>showTab("settings");
+
+function showTab(name){
+  Object.values(tabs).forEach(t=>t.classList.add("hidden"));
+  tabs[name].classList.remove("hidden");
+}
+
+const userEmailEl=document.getElementById("userEmail");
 const avatarImg=document.getElementById("avatarImg");
+const avatarUpload=document.getElementById("avatarUpload");
+const settingsAvatar=document.getElementById("settingsAvatar");
 const btnSignOut=document.getElementById("btnSignOut");
-
-const menuFriends=document.getElementById("menuFriends");
-const menuFeed=document.getElementById("menuFeed");
-const menuSettings=document.getElementById("menuSettings");
-
-const pageFriends=document.getElementById("pageFriends");
-const pageFeed=document.getElementById("pageFeed");
-const pageSettings=document.getElementById("pageSettings");
-const pageChat=document.getElementById("pageChat");
+const nickInput=document.getElementById("nickInput");
+const descInput=document.getElementById("descInput");
+const btnUpdateProfile=document.getElementById("btnUpdateProfile");
+const btnTheme=document.getElementById("btnTheme");
 
 const friendSearch=document.getElementById("friendSearch");
 const friendResults=document.getElementById("friendResults");
 const friendList=document.getElementById("friendList");
-
-const friendProfileBox=document.getElementById("friendProfileBox");
+const friendRequests=document.getElementById("friendRequests");
+const friendProfile=document.getElementById("friendProfile");
 const friendProfileName=document.getElementById("friendProfileName");
 const friendProfileAvatar=document.getElementById("friendProfileAvatar");
 const friendProfileDesc=document.getElementById("friendProfileDesc");
-const btnAddFriend=document.getElementById("btnAddFriend");
+const btnSendFriendRequest=document.getElementById("btnSendFriendRequest");
 const btnOpenChat=document.getElementById("btnOpenChat");
 
-const nickInput=document.getElementById("nickInput");
-const descInput=document.getElementById("descInput");
-const btnUpdateProfile=document.getElementById("btnUpdateProfile");
-
-const messagesEl=document.getElementById("messages");
+const chatEl=document.getElementById("chat");
 const chatTitle=document.getElementById("chatTitle");
+const messagesEl=document.getElementById("messages");
 const msgInput=document.getElementById("msgInput");
 const fileInput=document.getElementById("fileInput");
 const btnFile=document.getElementById("btnFile");
+const btnSend=document.getElementById("btnSend");
 
 const postInput=document.getElementById("postInput");
-const btnPost=document.getElementById("btnPost");
-const btnPostFile=document.getElementById("btnPostFile");
 const postFile=document.getElementById("postFile");
+const btnPostFile=document.getElementById("btnPostFile");
+const btnPost=document.getElementById("btnPost");
 const postList=document.getElementById("postList");
 
 let currentUser=null;
-let currentChatId=null;
 let currentFriend=null;
+let currentChatId=null;
+let viewedFriendId=null;
 
 // 🌙 Тема
 btnTheme.onclick=()=>document.documentElement.classList.toggle("dark");
 
-// Навигация
-function showPage(page){
-  pageFriends.style.display="none";
-  pageFeed.style.display="none";
-  pageSettings.style.display="none";
-  pageChat.style.display="none";
-  menuFriends.classList.remove("active-menu");
-  menuFeed.classList.remove("active-menu");
-  menuSettings.classList.remove("active-menu");
-  if(page==="friends"){pageFriends.style.display="block"; menuFriends.classList.add("active-menu");}
-  if(page==="feed"){pageFeed.style.display="block"; menuFeed.classList.add("active-menu");}
-  if(page==="settings"){pageSettings.style.display="block"; menuSettings.classList.add("active-menu");}
-  if(page==="chat"){pageChat.style.display="block";}
-}
-menuFriends.onclick=()=>showPage("friends");
-menuFeed.onclick=()=>showPage("feed");
-menuSettings.onclick=()=>showPage("settings");
+// Аватарка в профиле
+avatarUpload.onchange=e=>uploadAvatar(e);
+settingsAvatar.onclick=()=>avatarUpload.click();
+avatarImg.onclick=()=>showTab("settings");
+userEmailEl.parentElement.onclick=()=>showTab("settings");
 
-// 👤 Аватарка (base64)
-avatarUpload.onchange=async e=>{
+function uploadAvatar(e){
   const file=e.target.files[0];
   if(!file) return;
   const reader=new FileReader();
   reader.onload=async ()=>{
-    const dataUrl=reader.result;
-    avatarImg.src=dataUrl;
-    await updateProfile(currentUser,{photoURL:dataUrl});
-    await setDoc(doc(db,"users",currentUser.uid),{
-      displayName:nickInput.value||currentUser.displayName,
-      email:currentUser.email,
-      photoURL:dataUrl,
+    await updateProfile(auth.currentUser,{photoURL:reader.result});
+    avatarImg.src=reader.result;
+    settingsAvatar.src=reader.result;
+    await setDoc(doc(db,"users",auth.currentUser.uid),{
+      displayName:nickInput.value||auth.currentUser.displayName,
+      email:auth.currentUser.email,
+      photoURL:reader.result,
       description:descInput.value||"",
-      friends:[],
-      requests:[]
+      friends:arrayUnion(),
+      requests:arrayUnion()
     },{merge:true});
-    loadFriends();
   };
   reader.readAsDataURL(file);
-};
+}
 
 // Авторизация
 document.getElementById("btnRegister").onclick=()=>createUserWithEmailAndPassword(auth,email.value,password.value).catch(alert);
@@ -250,21 +245,26 @@ document.getElementById("btnLogin").onclick=()=>{
 };
 btnSignOut.onclick=()=>signOut(auth);
 
+// После авторизации
 onAuthStateChanged(auth,user=>{
   currentUser=user;
   if(user){
     authBox.classList.add("hidden");
     appBox.classList.remove("hidden");
-    userEmail.textContent=user.email;
+    userEmailEl.textContent=user.email;
     avatarImg.src=user.photoURL||"";
+    settingsAvatar.src=user.photoURL||"";
     nickInput.value=user.displayName||"";
     descInput.value=user.description||"";
     loadFriends();
+    loadRequests();
     loadPosts();
-    showPage("friends");
+    showTab("feed");
+    btnSignOut.classList.remove("hidden");
   }else{
     authBox.classList.remove("hidden");
     appBox.classList.add("hidden");
+    btnSignOut.classList.add("hidden");
   }
 });
 
@@ -275,49 +275,73 @@ btnUpdateProfile.onclick=async()=>{
     displayName:nickInput.value,
     email:currentUser.email,
     photoURL:currentUser.photoURL,
-    description:descInput.value||"",
-    friends:[],
-    requests:[]
+    description:descInput.value||""
   },{merge:true});
-  loadFriends();
 };
 
-// Друзья: поиск
-async function searchFriends(){
+// Поиск друзей
+friendSearch.oninput=async()=>{
   friendResults.innerHTML="";
   const q=friendSearch.value.trim().toLowerCase();
   if(!q) return;
   const usersSnap=await getDocs(collection(db,"users"));
   usersSnap.forEach(u=>{
     const d=u.data();
-    if(d.displayName && d.displayName.toLowerCase().includes(q) && u.id!==currentUser.uid){
+    if(d.displayName?.toLowerCase().includes(q) && u.id!==currentUser.uid){
       const div=document.createElement("div");
-      div.className="flex justify-between items-center";
-      div.innerHTML=`<span>${d.displayName}</span>
-      <button class="px-2 py-1 bg-sky-600 text-white rounded">Просмотр</button>`;
-      div.querySelector("button").onclick=()=>openFriendProfile(u.id,d);
+      div.className="flex justify-between items-center cursor-pointer";
+      div.textContent=d.displayName;
+      div.onclick=()=>showFriendProfile(u.id,d);
       friendResults.appendChild(div);
     }
   });
-}
-friendSearch.oninput=searchFriends;
+};
 
 // Открытие профиля друга
-function openFriendProfile(uid,data){
-  friendProfileBox.style.display="block";
+function showFriendProfile(uid,data){
+  viewedFriendId=uid;
   friendProfileName.textContent=data.displayName;
   friendProfileAvatar.src=data.photoURL||"";
   friendProfileDesc.textContent=data.description||"";
-  currentFriend=uid;
-  btnAddFriend.onclick=async()=>{
-    await updateDoc(doc(db,"users",uid),{requests:arrayUnion(currentUser.uid)});
-    alert("Заявка отправлена");
-  };
-  btnOpenChat.onclick=()=>{
-    openChat(uid,data.displayName);
-    showPage("chat");
-  };
+  friendProfile.classList.remove("hidden");
+  chatEl.classList.add("hidden");
+  btnSendFriendRequest.onclick=()=>sendFriendRequest(uid);
+  btnOpenChat.onclick=()=>openChat(uid,data.displayName);
 }
+
+// Заявки
+async function sendFriendRequest(uid){
+  await updateDoc(doc(db,"users",uid),{requests:arrayUnion(currentUser.uid)});
+  alert("Заявка отправлена");
+  loadRequests();
+}
+
+async function loadRequests(){
+  friendRequests.innerHTML="";
+  const docSnap=await getDoc(doc(db,"users",currentUser.uid));
+  const data=docSnap.data();
+  (data.requests||[]).forEach(async reqUid=>{
+    const reqSnap=await getDoc(doc(db,"users",reqUid));
+    const reqData=reqSnap.data();
+    const div=document.createElement("div");
+    div.className="flex justify-between items-center";
+    div.innerHTML=`<span>${reqData.displayName}</span>
+    <div class="flex gap-1">
+      <button class="px-2 py-1 bg-green-600 text-white rounded" onclick="acceptRequest('${reqUid}')">Принять</button>
+      <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="declineRequest('${reqUid}')">Отклонить</button>
+    </div>`;
+    friendRequests.appendChild(div);
+  });
+}
+window.acceptRequest=async(uid)=>{
+  await updateDoc(doc(db,"users",currentUser.uid),{friends:arrayUnion(uid),requests:arrayRemove(uid)});
+  await updateDoc(doc(db,"users",uid),{friends:arrayUnion(currentUser.uid)});
+  loadFriends(); loadRequests();
+};
+window.declineRequest=async(uid)=>{
+  await updateDoc(doc(db,"users",currentUser.uid),{requests:arrayRemove(uid)});
+  loadRequests();
+};
 
 // Друзья: список
 async function loadFriends(){
@@ -333,17 +357,26 @@ async function loadFriends(){
     div.innerHTML=`<div class="flex items-center gap-2">
       <img src="${fdata.photoURL||''}" class="w-6 h-6 rounded-full"/>
       <span>${fdata.displayName}</span>
-    </div>`;
-    div.onclick=()=>{openChat(fuid,fdata.displayName); showPage("chat");};
+    </div>
+    <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="removeFriend('${fuid}')">Удалить</button>`;
+    div.onclick=()=>openChat(fuid,fdata.displayName);
     friendList.appendChild(div);
   });
 }
+window.removeFriend=async(uid)=>{
+  await updateDoc(doc(db,"users",currentUser.uid),{friends:arrayRemove(uid)});
+  await updateDoc(doc(db,"users",uid),{friends:arrayRemove(currentUser.uid)});
+  loadFriends();
+};
 
 // Чат
-async function openChat(friendUid,friendName){
+function openChat(friendUid,friendName){
+  currentFriend=friendUid;
   currentChatId=[currentUser.uid,friendUid].sort().join("_");
   chatTitle.textContent="Чат с "+friendName;
   messagesEl.innerHTML="";
+  chatEl.classList.remove("hidden");
+  friendProfile.classList.add("hidden");
   const messagesRef=query(collection(db,"chats",currentChatId,"messages"),orderBy("time"));
   onSnapshot(messagesRef,snap=>{
     messagesEl.innerHTML="";
@@ -351,12 +384,17 @@ async function openChat(friendUid,friendName){
     messagesEl.scrollTop=messagesEl.scrollHeight;
   });
 }
-
-document.getElementById("btnSend").onclick=async()=>{
+btnSend.onclick=async()=>{
   if(!currentChatId) return alert("Выберите друга!");
   let content=msgInput.value.trim();
   if(!content) return;
-  await addMessage(currentChatId,"text",content);
+  await addDoc(collection(db,"chats",currentChatId,"messages"),{
+    uid:currentUser.uid,
+    avatar:currentUser.photoURL,
+    type:"text",
+    content,
+    time:Date.now()
+  });
   msgInput.value="";
 };
 btnFile.onclick=()=>fileInput.click();
@@ -366,20 +404,18 @@ fileInput.onchange=async e=>{
   if(!file) return;
   const reader=new FileReader();
   reader.onload=async ()=>{
+    const content=reader.result;
     const type=file.type.startsWith("image")?"image":"voice";
-    await addMessage(currentChatId,type,reader.result);
+    await addDoc(collection(db,"chats",currentChatId,"messages"),{
+      uid:currentUser.uid,
+      avatar:currentUser.photoURL,
+      type,
+      content,
+      time:Date.now()
+    });
   };
   reader.readAsDataURL(file);
 };
-async function addMessage(chatId,type,content){
-  await addDoc(collection(db,"chats",chatId,"messages"),{
-    uid:currentUser.uid,
-    avatar:currentUser.photoURL,
-    type,
-    content,
-    time:Date.now()
-  });
-}
 function renderMessage(id,m){
   const wrap=document.createElement("div");
   wrap.className="flex gap-2 items-start msg p-2 rounded-xl bg-slate-50 border dark:bg-slate-800 dark:text-slate-100";
@@ -398,16 +434,12 @@ btnPost.onclick=async()=>{
   let fileData="";
   if(postFile.files[0]){
     const reader=new FileReader();
-    reader.onload=async ()=>{
-      fileData=reader.result;
-      await addPost(content,fileData);
-    };
+    reader.onload=async ()=>{ fileData=reader.result; await addPost(content,fileData); };
     reader.readAsDataURL(postFile.files[0]);
   }else{
     await addPost(content,"");
   }
   postInput.value=""; postFile.value="";
-  loadPosts();
 };
 btnPostFile.onclick=()=>postFile.click();
 async function addPost(content,file){
@@ -418,6 +450,7 @@ async function addPost(content,file){
     file,
     time:Date.now()
   });
+  loadPosts();
 }
 async function loadPosts(){
   postList.innerHTML="";
@@ -426,12 +459,11 @@ async function loadPosts(){
     const data=docSnap.data();
     const div=document.createElement("div");
     div.className="border p-2 rounded-xl";
-    if(data.file) div.innerHTML=`<div class="flex items-center gap-2"><img src="${data.avatar||''}" class="w-6 h-6 rounded-full"/><b>${data.uid}</b></div><div>${data.content}</div><img src="${data.file}" class="post-img"/>`;
-    else div.innerHTML=`<div class="flex items-center gap-2"><img src="${data.avatar||''}" class="w-6 h-6 rounded-full"/><b>${data.uid}</b></div><div>${data.content}</div>`;
+    if(data.file) div.innerHTML=`<div>${data.content}</div><img src="${data.file}" class="post-img"/>`;
+    else div.innerHTML=`<div>${data.content}</div>`;
     postList.appendChild(div);
   });
 }
-
 </script>
 </body>
 </html>
