@@ -224,9 +224,10 @@ function safeText(s){ return s? String(s): ""; }
 
 /* ---------- AUTH ---------- */
 document.getElementById("btnRegister").onclick = () => {
-  createUserWithEmailAndPassword(auth, email.value, password.value)
+  const emailVal = document.getElementById("email").value;
+  const passwordVal = document.getElementById("password").value;
+  createUserWithEmailAndPassword(auth, emailVal, passwordVal)
     .then(async cred => {
-      // create users doc
       await setDoc(doc(db,"users",cred.user.uid), {
         displayName: cred.user.email.split("@")[0],
         email: cred.user.email,
@@ -240,12 +241,15 @@ document.getElementById("btnRegister").onclick = () => {
     .catch(e=>alert(e.message));
 };
 
-document.getElementById("btnLogin").onclick = ()=>{
-  const persistence = remember.checked ? browserLocalPersistence : inMemoryPersistence;
-  setPersistence(auth,persistence).then(()=>{
-    return signInWithEmailAndPassword(auth, email.value, password.value);
-  }).catch(e=>alert(e.message));
+document.getElementById("btnLogin").onclick = () => {
+  const emailVal = document.getElementById("email").value;
+  const passwordVal = document.getElementById("password").value;
+  const persistence = document.getElementById("remember").checked ? browserLocalPersistence : inMemoryPersistence;
+  setPersistence(auth,persistence).then(() => 
+    signInWithEmailAndPassword(auth, emailVal, passwordVal)
+  ).catch(e => alert(e.message));
 };
+
 
 btnSignOut.onclick = ()=> signOut(auth);
 
@@ -707,3 +711,4 @@ function subscribePosts(){
 </script>
 </body>
 </html>
+
